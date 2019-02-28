@@ -3,6 +3,30 @@ import './App.css';
 import {Map, InfoWindow, Marker, GoogleApiWrapper} from 'google-maps-react';
 
 class GoogleMap extends Component {
+  
+//   constructor(props){
+//     super(props);
+//     this.state = {
+//       data: 'Jordan Belfort'
+//     }
+//   }
+//   componentWillMount(){
+//     console.log('First this called');
+//   }
+
+//   getBuoyData(){
+//     setTimeout(() => {
+//       console.log('Our data is fetched');
+//       this.setState({
+//         data: 'Hello WallStreet'
+//       })
+//     }, 1000)
+//   }
+
+//   componentDidMount(){
+//     this.getBuoyData();
+//   }
+
   render() {
     return (
         <Map 
