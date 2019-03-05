@@ -19,8 +19,9 @@ class Buoy{
       this.period = period;
     } 
     
-    addBuoy (params) {
-        buoys.push(new Buoy(params.name, params.lat, params.lon));
+    addBuoy (params) {  
+        var message = buoys.push(new Buoy(params.name, params.lat, params.lon, params.height, params.period));
+        return message;
       };
     }
 
@@ -61,7 +62,7 @@ wsServer.on('request', request=>{
     const connection = request.accept();
     connection.on('message',message=>{
         console.log((new Date())+' received message');
-        connection.sendUTF('got your message');
+        connection.sendUTF(message);
         // let socketID = request.headers['sec-websocket-key'];
         // console.log(socketID.json.south);
         // let json = json.parse(message);
