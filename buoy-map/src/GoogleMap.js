@@ -8,16 +8,16 @@ var client = new WebSocket('ws://localhost:8080');
 
 class GoogleMap extends Component {
   
-  constructor(props){
-    super(props);
-    this.state = {
-      name: '',
-      lat: null,
-      lng: null,
-      height: null,
-      period: null
-    }
-  }
+  // constructor(props){
+  //   super(props);
+  //   this.state = {
+  //     name: '',
+  //     lat: null,
+  //     lng: null,
+  //     height: null,
+  //     period: null
+  //   }
+  // }
 
 initializeSocket(){
     
@@ -28,8 +28,19 @@ initializeSocket(){
       })
 
       client.on=('message', function(event){
-        var message = JSON.parse(event.data);
-        this.setState(message);
+        var server_message = JSON.parse(event.data);
+        console.log(server_message);
+        // constructor(server_message) {
+        //   super(props);
+        //   this.state = {
+        //     name: '',
+        //     lat: null,
+        //     lng: null,
+        //     height: null,
+        //     period: null
+        //   }
+        // }
+        // this.setState(server_message);
       })
 
       client.on = ('close',function(){
