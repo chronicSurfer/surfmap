@@ -1,5 +1,4 @@
 const express = require('express');
-// const EventEmitter = require ('events');
 const app = express();
 const WebSocket = require('websocket').server;
 const http = require('http');
@@ -21,7 +20,7 @@ class Buoy{
     
     addBuoy (params) {  
         var message = buoys.push(new Buoy(params.name, params.lat, params.lon, params.height, params.period));
-        return message;
+        // return message;
       };
     }
 
@@ -37,6 +36,19 @@ updateBuoyData = (params)=>{
     });
 
 }
+
+var buoys = [];
+
+subscribeToBuoys = (params) => {
+    var buoyListings = [];
+    buoys.forEach((e)=>{
+        if((e.lat < params.north && e.lat > params.south ) && (e.lon > params.west && e.lon < params.east)){
+            buoyListings.push(e);
+        }
+    })
+    return buoyListings;
+}
+
 
 //socket key storage
 let socketKey = {};
@@ -62,23 +74,59 @@ wsServer.on('request', request=>{
     const connection = request.accept();
     connection.on('message',message=>{
         console.log((new Date())+' received message');
-        connection.sendUTF(message);
-        // let socketID = request.headers['sec-websocket-key'];
-        // console.log(socketID.json.south);
-        // let json = json.parse(message);
-        // let id = json['id'];
-        // let params = json['params'];
-        // let headers = json['headers'];
+        var socketID = req.headers['sec-websocket-key']; 
 
-        // if (method === 'subscribeToBuoys') {
-        //     socketKey[]
-        // }
+        //parses the JSON-RPC request
+        var json = JSON.parse(msg); 
+        var id = json['id'];
+        var method = json['method'];
+        var params = json['params'];
+        var headers = json['headers'];
+
+        //subscribe to buoy functionality
+        if (method == "subscribeToBuoys") {
+            socketKey[socketID] = [params.north,params.south,params.east,params.west];
+            buoyListings = subscribeToBuoys(params);
+            connection.send('{"rpc": "2.0", "result": "ok", "id": "' + id + '"}');
+
+            //sends all buoys that fall within bounding box to client
+            buoyListings.forEach(function(element) {
+                connection.send('{"rpc": "2.0", "method": "buoyNotification", "params": {"name": "' + element.name + '","lat": ' + element.lat + ',"lon": ' + element.lon + ',"height": ' + element.height + ',"period": ' + element.period + '}}');
+                });
+            }
+
+        
+        else if (method == "addBuoy") {
+            addBuoy(params, id);
+
+            //subscribeToBuoys functionality
+            Object.keys(socketKey).forEach(function(key) {
+                connection.id = key;
+                if((params.lat < socketKey[key].north && params.lat > socketKey[key].south) && (params.lon < socketKey[key].east && params.lon > socketKey[key].west)){
+                connection.id.send('{"rpc": "2.0", "method": "buoyNotification", "params": {"name": "' + params.name + '","lat": ' + params.lat + ',"lon": ' + params.lon + ',"height": ' + params.height + ',"period": ' + params.period + '}}');
+                }
+            });
+                connection.send('{"rpc": "2.0", "result": "ok", "id": "' + id + '"}');
+                } 
+
+        //updateBuoy Functionality        
+        else if (method == "updateBuoyData") {
+            updatedBuoy = updateBuoyData(params);
+            connection.send('{"rpc": "2.0", "result": "ok", "id": "' + id + '"}');
+
+            Object.keys(socketKey).forEach(function(key) {
+                connection.id = key;
+                if((updatedBuoy.lat < socketKey[key].north && updatedBuoy.lat > socketKey[key].south) && (updatedBuoy.lon < socketKey[key].east && updatedBuoy.lon > socketKey[key].west))
+                {
+                connection.id.send('{"rpc": "2.0", "method": "buoyNotification", "params": {"name": ' + updatedBuoy.name + ',"lat": ' + updatedBuoy.lat + ',"lon": ' + updatedBuoy.lon + ',"height": ' + updatedBuoy.height + ',"period": ' + updatedBuoy.period + '}}');
+                }
+            });
+            }
+    connection.on('close',()=>console.log('Connection Closed'));
     });
 });
-// const eventEmitter = new events.EventEmitter();
 
 //Error Handling
 const errorHandling = (req, res)=>{
     res.status(req.status || 500).send(req.error || 'Server Error');
 }
-
